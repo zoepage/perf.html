@@ -6,6 +6,7 @@
 // Disabling the call tree's sidebar until it's useful
 // https://github.com/devtools-html/perf.html/issues/914
 import CallTreeSidebar from './CallTreeSidebar';
+import NetworkSidebar from './NetworkSidebar';
 
 import type { TabSlug } from '../../app-logic/tabs-handling';
 
@@ -20,6 +21,6 @@ export default function selectSidebar(
     'stack-chart': null,
     'marker-chart': null,
     'marker-table': null,
-    'network-chart': null,
+    'network-chart': NetworkSidebar,
   }[selectedTab];
 }

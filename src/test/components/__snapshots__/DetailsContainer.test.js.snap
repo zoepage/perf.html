@@ -102,6 +102,7 @@ exports[`app/DetailsContainer renders an initial view with or without a sidebar 
   vertical={false}
 >
   <Connect(ProfileViewer) />
+  <Connect(NetworkSidebar) />
 </t>
 `;
 
