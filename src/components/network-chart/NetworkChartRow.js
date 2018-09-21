@@ -10,10 +10,13 @@ import Tooltip from '../shared/Tooltip';
 import type { CssPixels } from '../../types/units';
 import type { ThreadIndex } from '../../types/profile';
 import type { TracingMarker } from '../../types/profile-derived';
-import type { MarkerPayload } from '../../types/markers';
+import type { NetworkPayload } from '../../types/markers';
 
 type Props = {
   +marker: TracingMarker,
+  // Pass the payload in as well, since our types can't express a TracingMarker with
+  // a specific payload.
+  +networkPayload: NetworkPayload,
   +markerStyle: {
     [key: string]: string | number,
   },
@@ -51,45 +54,31 @@ class NetworkChartRow extends React.PureComponent<Props, State> {
     });
   };
 
-  _getMarkerData(marker: TracingMarker): ?MarkerPayload {
-    if (marker.data === undefined && marker.data === null) {
-      console.error('Network marker has no data!');
-      return null;
-    }
-    return marker.data;
-  }
-
   render() {
-    const { marker, markerStyle } = this.props;
+    const { marker, markerStyle, networkPayload } = this.props;
+    const itemClassName = ('item ' + networkPayload.status).toLowerCase();
 
-    const markerData = this._getMarkerData(marker);
-
-    if (markerData !== null) {
-      const itemClassName = ('item ' + markerData.status).toLowerCase();
-
-      return (
-        <section className={itemClassName}>
-          <div className="itemLabel">{marker.name}</div>
-          <div
-            className="itemBar"
-            style={markerStyle}
-            onMouseEnter={this._hoverIn}
-            onMouseLeave={this._hoverOut}
-          >
-            &nbsp;
-          </div>
-          {this.state.hovered ? (
-            <Tooltip mouseX={this.state.pageX} mouseY={this.state.pageY}>
-              <MarkerTooltipContents
-                marker={marker}
-                threadIndex={this.props.threadIndex}
-              />
-            </Tooltip>
-          ) : null}
-        </section>
-      );
-    }
-    return null;
+    return (
+      <section className={itemClassName}>
+        <div className="itemLabel">{marker.name}</div>
+        <div
+          className="itemBar"
+          style={markerStyle}
+          onMouseEnter={this._hoverIn}
+          onMouseLeave={this._hoverOut}
+        >
+          &nbsp;
+        </div>
+        {this.state.hovered ? (
+          <Tooltip mouseX={this.state.pageX} mouseY={this.state.pageY}>
+            <MarkerTooltipContents
+              marker={marker}
+              threadIndex={this.props.threadIndex}
+            />
+          </Tooltip>
+        ) : null}
+      </section>
+    );
   }
 }
 

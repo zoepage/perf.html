@@ -3,6 +3,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 // @flow
+import { oneLine } from 'common-tags';
 import * as React from 'react';
 import explicitConnect from '../../utils/connect';
 import MarkerSettings from '../shared/MarkerSettings';
@@ -18,6 +19,7 @@ import {
 import { getSelectedThreadIndex } from '../../reducers/url-state';
 import { updatePreviewSelection } from '../../actions/profile-view';
 
+import type { NetworkPayload } from '../../types/markers';
 import type {
   TracingMarker,
   MarkerTimingRows,
@@ -34,6 +36,9 @@ import type {
 require('./index.css');
 
 const ROW_HEIGHT = 17.5;
+// The window object is a custom definition that we are maintaining in src/types/globals/Window.js
+// In order to use something, we expose the definition there. However, the window.screen
+// is only supported in Firefox and Chrome, so I think we should find another value here.
 const CONTAINER_WIDTH = 150 / window.screen.width * 100; // this will be replaced by the viewport
 
 type DispatchProps = {|
@@ -93,9 +98,9 @@ class NetworkChart extends React.PureComponent<Props> {
     return markerLength;
   };
 
-  _getMarkerStyling = (marker: TracingMarker) => {
+  _getMarkerStyling = (marker: TracingMarker, payload: NetworkPayload) => {
     const markerLength = this._getMarkerLength(marker.dur);
-    const markerPosition = this._getMarkerPosition(marker.data.startTime);
+    const markerPosition = this._getMarkerPosition(payload.startTime);
 
     const markerStyling = {
       width: markerLength + '%',
@@ -104,15 +109,50 @@ class NetworkChart extends React.PureComponent<Props> {
     return markerStyling;
   };
 
+  /**
+   * Our definition of tracing markers does not currently have the ability to refine
+   * the union of all payloads to one specific payload through the type definition.
+   * This function does a runtime check to do so.
+   */
+  _getNetworkPayloadOrNull(marker: TracingMarker): null | NetworkPayload {
+    if (!marker.data || marker.data.type !== 'Network') {
+      return null;
+    }
+    return marker.data;
+  }
+
+  _onCopy = (_event: Event) => {
+    // No implemented.
+  };
+
+  _onKeyDown = (_event: KeyboardEvent) => {
+    // No implemented.
+  };
+
   // Create row with correct details
   _renderRow = (nodeId: any, index: number) => {
-    const marker = this.props.markers;
+    const marker = this.props.markers[index];
+
+    // Since our type definition for TracingMarker can't refine to just Network
+    // markers, extract the payload.
+    const networkPayload = this._getNetworkPayloadOrNull(marker);
+    if (networkPayload === null) {
+      console.error(
+        oneLine`
+          The NetworkChart is supposed to only receive Network markers, but some other
+          kind of marker payload was passed in.
+        `
+      );
+      return null;
+    }
 
     return (
       <NetworkChartRow
-        marker={marker[index]}
+        marker={marker}
+        // Pass in the properly typed payload.
+        networkPayload={networkPayload}
         index={index}
-        markerStyle={this._getMarkerStyling(marker[index])}
+        markerStyle={this._getMarkerStyling(marker, networkPayload)}
         threadIndex={this.props.threadIndex}
       />
     );
@@ -137,6 +177,8 @@ class NetworkChart extends React.PureComponent<Props> {
             specialItems={[]}
             containerWidth={3000}
             disableOverscan={true}
+            onCopy={this._onCopy}
+            onKeyDown={this._onKeyDown}
           />
         )}
       </div>
