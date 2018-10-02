@@ -12,15 +12,14 @@ import type { ThreadIndex } from '../../types/profile';
 import type { TracingMarker } from '../../types/profile-derived';
 import type { NetworkPayload } from '../../types/markers';
 
-type Props = {
+export type NetworkChartRowProps = {
   +marker: TracingMarker,
   // Pass the payload in as well, since our types can't express a TracingMarker with
   // a specific payload.
-  +networkPayload: NetworkPayload,
+  +networkPayload: NetworkPayload | null,
   +markerStyle: {
     [key: string]: string | number,
   },
-  +index: number,
   +threadIndex: ThreadIndex,
 };
 
@@ -30,7 +29,7 @@ type State = {
   hovered: ?boolean,
 };
 
-class NetworkChartRow extends React.PureComponent<Props, State> {
+class NetworkChartRow extends React.PureComponent<NetworkChartRowProps, State> {
   state = {
     pageX: 0,
     pageY: 0,
@@ -56,6 +55,10 @@ class NetworkChartRow extends React.PureComponent<Props, State> {
 
   render() {
     const { marker, markerStyle, networkPayload } = this.props;
+
+    if (networkPayload === null) {
+      return null;
+    }
     const itemClassName = ('item ' + networkPayload.status).toLowerCase();
 
     return (
